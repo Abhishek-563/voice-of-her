@@ -8,6 +8,7 @@ import { Server } from "socket.io";
 import sosRoutes from "./routes/sosRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import connectDB from "./config/db.js";
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.set("io", io);
 app.use("/api/auth", authRoutes);
 app.use("/api/sos", sosRoutes);
 app.use("/api/contacts", contactRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

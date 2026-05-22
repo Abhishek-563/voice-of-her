@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 
 import Home from "./pages/Home";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -25,9 +26,9 @@ function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <AdminDashboard />
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
 

@@ -37,6 +37,29 @@ const sosAlertSchema = new mongoose.Schema(
       default: "",
     },
 
+    emailStatus: {
+      type: String,
+      enum: ["Pending", "Sent", "Failed"],
+      default: "Pending",
+    },
+
+    smsStatus: {
+      type: String,
+      enum: ["Pending", "Sent", "Failed", "Skipped"],
+      default: "Pending",
+    },
+
+    evidenceStatus: {
+      type: String,
+      enum: ["Not uploaded", "Uploaded", "Failed"],
+      default: "Not uploaded",
+    },
+
+    priority: {
+      type: String,
+      default: "High Priority",
+    },
+
     status: {
       type: String,
       enum: ["Active", "Resolved"],

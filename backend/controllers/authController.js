@@ -36,6 +36,7 @@ export const registerUser = async (req, res) => {
       name: user.name,
       email: user.email,
       phone: user.phone,
+      role: user.role,
       emergencyContacts: user.emergencyContacts,
       token: generateToken(user._id),
     });
@@ -52,6 +53,7 @@ export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
+    console.log("LOGIN USER FROM DB:", user);
 
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
@@ -59,6 +61,7 @@ export const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        role: user.role,
         emergencyContacts: user.emergencyContacts,
         token: generateToken(user._id),
       });

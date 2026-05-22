@@ -40,4 +40,10 @@ export const sosAPI = {
   deleteResolved: () => api.delete("/sos/resolved"),
 };
 
+export const adminAPI = {
+  getUsers: () => api.get("/admin/users"),
+  updateUserRole: (id, role) =>
+    api.patch(`/admin/users/${id}/role`, { role }),
+};
+
 export default api;

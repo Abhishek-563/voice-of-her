@@ -4,6 +4,7 @@ import {
   sendEmergencyEmail,
   sendEvidenceFollowUpEmail,
 } from "../services/emailService.js";
+import { sendEmergencySMS } from "../services/smsService.js";
 
 export const sendSOS = async (req, res) => {
   try {
@@ -23,6 +24,9 @@ export const sendSOS = async (req, res) => {
       longitude,
       address: address || "Location address not available",
       evidenceUrl: evidenceUrl || "",
+      emailStatus: "Pending",
+      smsStatus: "Pending",
+      evidenceStatus: evidenceUrl ? "Uploaded" : "Not uploaded",
     });
 
     const io = req.app.get("io");
@@ -34,12 +38,17 @@ export const sendSOS = async (req, res) => {
     const contacts = await Contact.find({ user: req.user._id });
 
     res.status(201).json({
-      message: "SOS alert created. Emails are being sent.",
+      message: "SOS alert created. Emails and SMS are being sent.",
       alert,
       contactsNotified: contacts.length,
     });
 
     setImmediate(async () => {
+      let emailSentCount = 0;
+      let emailFailedCount = 0;
+      let smsSentCount = 0;
+      let smsFailedCount = 0;
+
       for (const contact of contacts) {
         if (contact.email) {
           try {
@@ -56,13 +65,53 @@ export const sendSOS = async (req, res) => {
                 timeZone: "Asia/Kolkata",
               }),
             });
+
+            emailSentCount++;
           } catch (emailError) {
+            emailFailedCount++;
             console.log(
               `Failed to send SOS email to ${contact.email}:`,
               emailError.message
             );
           }
         }
+
+        if (contact.phone) {
+          try {
+            const smsMessage = await sendEmergencySMS({
+              to: contact.phone,
+              contactName: contact.name,
+              userName: alert.name,
+              latitude,
+              longitude,
+              address: address || "Live GPS location",
+              evidenceUrl: evidenceUrl || "",
+            });
+
+            if (smsMessage) {
+              smsSentCount++;
+            }
+          } catch (smsError) {
+            smsFailedCount++;
+            console.log(
+              `Failed to send SOS SMS to ${contact.phone}:`,
+              smsError.message
+            );
+          }
+        }
+      }
+
+      alert.emailStatus =
+        emailSentCount > 0 ? "Sent" : emailFailedCount > 0 ? "Failed" : "Pending";
+
+      alert.smsStatus =
+        smsSentCount > 0 ? "Sent" : smsFailedCount > 0 ? "Failed" : "Skipped";
+
+      await alert.save();
+
+      const io = req.app.get("io");
+      if (io) {
+        io.emit("sosStatusUpdated", alert);
       }
     });
   } catch (error) {
@@ -151,6 +200,7 @@ export const updateSOSEvidence = async (req, res) => {
     }
 
     alert.evidenceUrl = evidenceUrl;
+    alert.evidenceStatus = "Uploaded";
 
     const updatedAlert = await alert.save();
 
@@ -183,10 +233,29 @@ export const updateSOSEvidence = async (req, res) => {
           );
         }
       }
+
+      if (contact.phone) {
+        try {
+          await sendEmergencySMS({
+            to: contact.phone,
+            contactName: contact.name,
+            userName: alert.name,
+            latitude: alert.latitude,
+            longitude: alert.longitude,
+            address: alert.address || "Live GPS location",
+            evidenceUrl,
+          });
+        } catch (smsError) {
+          console.log(
+            `Failed to send evidence SMS to ${contact.phone}:`,
+            smsError.message
+          );
+        }
+      }
     }
 
     res.status(200).json({
-      message: "Evidence attached and follow-up emails sent successfully",
+      message: "Evidence attached and follow-up notifications sent successfully",
       alert: updatedAlert,
       contactsNotified: contacts.length,
     });
@@ -249,6 +318,8 @@ export const clearAllSOSAlerts = async (req, res) => {
   }
 };
 
+export const clearAllSOS = clearAllSOSAlerts;
+
 export const deleteResolvedSOSAlerts = async (req, res) => {
   try {
     const result = await SOSAlert.deleteMany({
@@ -272,3 +343,5 @@ export const deleteResolvedSOSAlerts = async (req, res) => {
     });
   }
 };
+
+export const deleteResolvedSOS = deleteResolvedSOSAlerts;
