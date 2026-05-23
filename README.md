@@ -1,46 +1,188 @@
-# React + Vite
+# Voice of Her 🚨
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Voice of Her is an AI-powered women safety web application that provides instant SOS alerts, real-time location tracking, emergency contact notifications, evidence recording, and admin monitoring.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+# Features ✨
 
-## React Compiler
+- User Authentication (Login/Register)
+- JWT-based Secure Authentication
+- Role-based Admin/User Access
+- Emergency SOS Trigger
+- Live GPS Location Sharing
+- Emergency Contact Management
+- Real-time SOS Dashboard
+- Evidence Video Recording
+- Cloudinary Evidence Upload
+- Email Notifications
+- Twilio SMS Integration (Configured)
+- Admin Monitoring Panel
+- Resolve/Delete SOS Alerts
+- Socket.io Real-time Updates
+- Responsive Modern UI
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## MongoDB Atlas Setup
+# Tech Stack 🛠️
 
-This project uses Mongoose to connect to MongoDB. You do not need to manually create collections in Atlas — MongoDB will create them automatically when the first document is inserted.
+## Frontend
+- React.js
+- Tailwind CSS
+- Axios
+- React Router
+- Socket.io Client
+- Lucide React Icons
 
-Important: the backend uses `backend/.env`, not the root `/.env` file.
+## Backend
+- Node.js
+- Express.js
+- MongoDB Atlas
+- Mongoose
+- JWT Authentication
+- Nodemailer
+- Twilio
+- Socket.io
 
-To use Atlas:
+## Cloud Services
+- MongoDB Atlas
+- Cloudinary
+- Twilio
 
-1. Create a MongoDB Atlas cluster and database user.
-2. Copy `backend/.env.example` to `backend/.env`.
-3. Update `MONGO_URI` with your actual Atlas string.
-   Example:
-   `mongodb+srv://<username>:<password>@cluster0.f6mk8nx.mongodb.net/voiceofher?retryWrites=true&w=majority`
-4. If your password contains special characters such as `$`, `@`, or `%`, URL-encode them.
-   Example password `Abhi$2005` becomes `Abhi%242005`.
-5. Start the backend from the `backend` folder:
-   - `cd backend`
-   - `npm install`
-   - `npm run dev`
-6. Verify backend health by opening:
-   `http://localhost:5000/api/health`
+---
 
-If the backend starts but crashes with a MongoDB Atlas connection error, your Atlas cluster likely needs network access allowed for your IP.
+# Project Structure 📁
 
-- Open Atlas > Network Access > Add IP Address.
-- For testing, use `0.0.0.0/0` to allow all IPs temporarily.
-- Then restart the backend.
+```bash
+voice-of-her/
+│
+├── backend/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   ├── config/
+│   └── server.js
+│
+├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── services/
+│   ├── context/
+│   └── App.jsx
+│
+├── public/
+├── package.json
+└── README.md
+```
 
-The backend already reads the `MONGO_URI` environment variable in `backend/config/db.js`, falling back to `mongodb://localhost:27017/voiceofher` if not set.
+---
 
-## Expanding the ESLint configuration
+# Installation ⚙️
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Clone Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/voiceofher.git
+cd voiceofher
+```
+
+---
+
+# Install Frontend Dependencies
+
+```bash
+npm install
+```
+
+---
+
+# Install Backend Dependencies
+
+```bash
+cd backend
+npm install
+```
+
+---
+
+# Environment Variables 🔑
+
+Create `.env` file inside backend folder:
+
+```env
+PORT=5000
+
+MONGO_URI=your_mongodb_uri
+
+JWT_SECRET=your_secret_key
+
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_email_password
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_token
+TWILIO_PHONE_NUMBER=your_twilio_number
+```
+
+---
+
+# Run Frontend 🚀
+
+```bash
+npm run dev
+```
+
+---
+
+# Run Backend 🚀
+
+```bash
+cd backend
+npm run dev
+```
+
+---
+
+# Screenshots 📸
+
+## Home Page
+- Modern women safety landing page
+- SOS trigger system
+
+## Admin Dashboard
+- Live SOS monitoring
+- Evidence viewing
+- Alert management
+
+## Emergency Contacts
+- Add/Delete trusted contacts
+
+---
+
+# Future Improvements 🔮
+
+- AI Threat Detection
+- Voice Command SOS
+- Shake Detection
+- Mobile App Version
+- Live Audio Streaming
+- SMS Delivery Tracking
+- Nearby Emergency Services
+
+---
+
+# Author 👨‍💻
+
+Developed by Abhishek
+
+---
+
+# License 📄
+
+This project is developed for educational and safety purposes.
