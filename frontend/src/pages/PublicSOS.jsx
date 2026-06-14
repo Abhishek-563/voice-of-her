@@ -61,8 +61,17 @@ export default function PublicSOS() {
   const fetchAlert = useCallback(async () => {
     try {
       setLoading(true);
+      const getBackendURL = () => {
+        if (import.meta.env.VITE_API_URL) {
+          return import.meta.env.VITE_API_URL;
+        }
+        if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+          return "http://localhost:5000";
+        }
+        return "https://voice-of-her.onrender.com";
+      };
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/sos/${id}/public`
+        `${getBackendURL()}/api/sos/${id}/public`
       );
       setAlertData(res.data);
       setError("");
