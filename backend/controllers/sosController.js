@@ -1,5 +1,9 @@
 import SOSAlert from "../models/SOSAlert.js";
 import Contact from "../models/Contact.js";
+import User from "../models/User.js";
+import PushSubscription from "../models/PushSubscription.js";
+import webpush from "web-push";
+import { sendFcmPush } from "../services/fcmService.js";
 import {
   sendEmergencyEmail,
   sendEvidenceFollowUpEmail,
@@ -16,6 +20,16 @@ export const sendSOS = async (req, res) => {
       });
     }
 
+    const contacts = await Contact.find({ user: req.user._id });
+
+    const recipients = contacts.map(c => ({
+      contactName: c.name,
+      contactEmail: c.email || "",
+      contactPhone: c.phone || "",
+      status: "Sent",
+      deliveredAt: new Date()
+    }));
+
     const alert = await SOSAlert.create({
       user: req.user?._id,
       name: req.user?.name || name || "Unknown User",
@@ -27,15 +41,18 @@ export const sendSOS = async (req, res) => {
       emailStatus: "Pending",
       smsStatus: "Pending",
       evidenceStatus: evidenceUrl ? "Uploaded" : "Not uploaded",
+      recipients,
     });
 
     const io = req.app.get("io");
 
     if (io) {
-      io.emit("newSOSAlert", alert);
+      io.emit("newSOSAlert", {
+        ...alert.toObject(),
+        notifiedEmails: contacts.map(c => c.email ? c.email.toLowerCase() : ""),
+        notifiedPhones: contacts.map(c => c.phone ? c.phone.replace(/[\s\-\(\)\+]/g, "") : "")
+      });
     }
-
-    const contacts = await Contact.find({ user: req.user._id });
 
     res.status(201).json({
       message: "SOS alert created. Emails and SMS are being sent.",
@@ -49,6 +66,7 @@ export const sendSOS = async (req, res) => {
       let smsSentCount = 0;
       let smsFailedCount = 0;
 
+      // 1. Send Email & SMS to contacts
       for (const contact of contacts) {
         if (contact.email) {
           try {
@@ -64,6 +82,7 @@ export const sendSOS = async (req, res) => {
               alertTime: new Date().toLocaleString("en-IN", {
                 timeZone: "Asia/Kolkata",
               }),
+              alertId: alert._id,
             });
 
             emailSentCount++;
@@ -86,6 +105,7 @@ export const sendSOS = async (req, res) => {
               longitude,
               address: address || "Live GPS location",
               evidenceUrl: evidenceUrl || "",
+              alertId: alert._id,
             });
 
             if (smsMessage) {
@@ -99,6 +119,77 @@ export const sendSOS = async (req, res) => {
             );
           }
         }
+      }
+
+      // 2. Send Web Push Notifications to registered contact users and admins
+      try {
+        const contactEmails = contacts.map(c => c.email ? c.email.toLowerCase() : "").filter(Boolean);
+        const contactPhones = contacts.map(c => c.phone ? c.phone.replace(/[\s\-\(\)\+]/g, "") : "").filter(Boolean);
+
+        let targetUserIds = [];
+        if (contactEmails.length > 0 || contactPhones.length > 0) {
+          // Find matching users in database
+          const matchingUsers = await User.find({
+            $or: [
+              { email: { $in: contactEmails } },
+              { phone: { $in: contactPhones } }
+            ]
+          });
+          targetUserIds = matchingUsers.map(u => u._id);
+        }
+
+        // Include admin users in recipient list
+        const adminUsers = await User.find({ role: "admin" });
+        const adminUserIds = adminUsers.map(u => u._id);
+
+        const allRecipientUserIds = [...new Set([...targetUserIds, ...adminUserIds])];
+
+        if (allRecipientUserIds.length > 0) {
+          // 2.1 Send Web Push Notifications
+          const subscriptions = await PushSubscription.find({
+            user: { $in: allRecipientUserIds }
+          });
+
+          const webPushPayload = JSON.stringify({
+            title: "🚨 EMERGENCY SOS ALERT",
+            body: `${alert.name} needs immediate help. Tap to view live location.`,
+            url: `/sos-active/${alert._id}`,
+            alertId: alert._id
+          });
+
+          console.log(`Found ${subscriptions.length} Web Push subscriptions. Dispatching...`);
+
+          for (const sub of subscriptions) {
+            try {
+              await webpush.sendNotification(sub.subscription, webPushPayload);
+            } catch (pushError) {
+              if (pushError.statusCode === 410 || pushError.statusCode === 404) {
+                await PushSubscription.deleteOne({ _id: sub._id });
+              }
+            }
+          }
+
+          // 2.2 Send Firebase Cloud Messaging (FCM) Notifications
+          const matchingUsersWithToken = await User.find({
+            _id: { $in: allRecipientUserIds },
+            fcmToken: { $exists: true, $ne: "" }
+          });
+
+          console.log(`Found ${matchingUsersWithToken.length} users with FCM tokens. Dispatching FCM push...`);
+
+          for (const recipientUser of matchingUsersWithToken) {
+            await sendFcmPush(recipientUser.fcmToken, {
+              title: "🚨 EMERGENCY SOS ALERT",
+              body: `${alert.name} needs immediate help. Tap to view live location.`,
+              data: {
+                url: `/sos-active/${alert._id}`,
+                alertId: String(alert._id),
+              }
+            });
+          }
+        }
+      } catch (pushGeneralError) {
+        console.error("General error dispatching Web Push/FCM Notifications:", pushGeneralError.message);
       }
 
       alert.emailStatus =
@@ -225,6 +316,7 @@ export const updateSOSEvidence = async (req, res) => {
             alertTime: new Date().toLocaleString("en-IN", {
               timeZone: "Asia/Kolkata",
             }),
+            alertId: alert._id,
           });
         } catch (emailError) {
           console.log(
@@ -244,6 +336,7 @@ export const updateSOSEvidence = async (req, res) => {
             longitude: alert.longitude,
             address: alert.address || "Live GPS location",
             evidenceUrl,
+            alertId: alert._id,
           });
         } catch (smsError) {
           console.log(
@@ -345,3 +438,128 @@ export const deleteResolvedSOSAlerts = async (req, res) => {
 };
 
 export const deleteResolvedSOS = deleteResolvedSOSAlerts;
+
+export const getSOSAlert = async (req, res) => {
+  try {
+    const alert = await SOSAlert.findById(req.params.id);
+    if (!alert) {
+      return res.status(404).json({
+        message: "SOS alert not found",
+      });
+    }
+    res.status(200).json(alert);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch SOS alert",
+      error: error.message,
+    });
+  }
+};
+
+export const acknowledgeSOSAlert = async (req, res) => {
+  try {
+    const alert = await SOSAlert.findById(req.params.id);
+
+    if (!alert) {
+      return res.status(404).json({
+        message: "SOS alert not found",
+      });
+    }
+
+    const myEmail = req.user.email?.toLowerCase();
+    const myPhone = req.user.phone ? req.user.phone.replace(/[\s\-\(\)\+]/g, "") : "";
+
+    let recipientMatched = false;
+    for (const recipient of alert.recipients) {
+      const recEmail = recipient.contactEmail?.toLowerCase();
+      const recPhone = recipient.contactPhone ? recipient.contactPhone.replace(/[\s\-\(\)\+]/g, "") : "";
+
+      if (recEmail === myEmail || recPhone === myPhone) {
+        recipient.status = "Acknowledged";
+        recipient.acknowledgedAt = new Date();
+        recipientMatched = true;
+      }
+    }
+
+    // Admins are also recipients. If user is admin and not explicitly in contacts, still acknowledge
+    if (!recipientMatched && req.user.role === "admin") {
+      alert.recipients.push({
+        contactName: req.user.name,
+        contactEmail: myEmail,
+        contactPhone: myPhone,
+        status: "Acknowledged",
+        acknowledgedAt: new Date(),
+        deliveredAt: new Date(),
+      });
+      recipientMatched = true;
+    }
+
+    if (!recipientMatched) {
+      return res.status(400).json({
+        message: "You are not listed as an emergency contact or admin for this alert",
+      });
+    }
+
+    await alert.save();
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("sosStatusUpdated", alert);
+    }
+
+    res.status(200).json({
+      message: "SOS alert acknowledged successfully",
+      alert,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to acknowledge SOS alert",
+      error: error.message,
+    });
+  }
+};
+
+export const getUnacknowledgedSOSAlerts = async (req, res) => {
+  try {
+    const myEmail = req.user.email?.toLowerCase();
+    const myPhone = req.user.phone ? req.user.phone.replace(/[\s\-\(\)\+]/g, "") : "";
+
+    const query = {
+      status: "Active",
+      user: { $ne: req.user._id },
+      $or: [
+        {
+          recipients: {
+            $elemMatch: {
+              status: { $in: ["Sent", "Delivered"] },
+              $or: [
+                { contactEmail: myEmail },
+                { contactPhone: myPhone }
+              ]
+            }
+          }
+        }
+      ]
+    };
+
+    // If they are an admin, they also get any active alerts they haven't acknowledged (excluding their own)
+    if (req.user.role === "admin") {
+      const activeAlerts = await SOSAlert.find({ status: "Active", user: { $ne: req.user._id } });
+      const filteredForAdmin = activeAlerts.filter(alert => {
+        const isAckedByAdmin = alert.recipients.some(
+          r => (r.contactEmail?.toLowerCase() === myEmail || r.contactPhone?.replace(/[\s\-\(\)\+]/g, "") === myPhone) && r.status === "Acknowledged"
+        );
+        return !isAckedByAdmin;
+      });
+      return res.status(200).json(filteredForAdmin);
+    }
+
+    const alerts = await SOSAlert.find(query);
+    res.status(200).json(alerts);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch unacknowledged alerts",
+      error: error.message,
+    });
+  }
+};

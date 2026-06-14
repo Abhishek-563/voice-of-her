@@ -8,6 +8,9 @@ import {
   deleteSOSAlert,
   clearAllSOS,
   deleteResolvedSOS,
+  getSOSAlert,
+  acknowledgeSOSAlert,
+  getUnacknowledgedSOSAlerts,
 } from "../controllers/sosController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -16,6 +19,11 @@ import { adminOnly } from "../middleware/adminMiddleware.js";
 const router = express.Router();
 
 router.post("/send", protect, sendSOS);
+
+router.get("/unacknowledged", protect, getUnacknowledgedSOSAlerts);
+router.patch("/:id/acknowledge", protect, acknowledgeSOSAlert);
+
+router.get("/:id/public", getSOSAlert);
 
 router.get("/history", protect, adminOnly, getSOSHistory);
 

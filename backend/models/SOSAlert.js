@@ -65,6 +65,22 @@ const sosAlertSchema = new mongoose.Schema(
       enum: ["Active", "Resolved"],
       default: "Active",
     },
+
+    recipients: [
+      {
+        contactName: String,
+        contactEmail: String,
+        contactPhone: String,
+        status: {
+          type: String,
+          enum: ["Sent", "Delivered", "Acknowledged", "Resolved"],
+          default: "Sent",
+        },
+        deliveredAt: { type: Date, default: Date.now },
+        acknowledgedAt: Date,
+        resolvedAt: Date,
+      }
+    ],
   },
   {
     timestamps: true,

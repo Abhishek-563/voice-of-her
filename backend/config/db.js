@@ -9,6 +9,21 @@ const connectDB = async () => {
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
 
+    // Drop unique indexes on contacts collection if they exist to prevent duplicate key errors
+    try {
+      await mongoose.connection.db.collection("contacts").dropIndex("email_1");
+      console.log("Successfully dropped email_1 unique index on contacts collection.");
+    } catch (err) {
+      // Index doesn't exist, ignore
+    }
+
+    try {
+      await mongoose.connection.db.collection("contacts").dropIndex("phone_1");
+      console.log("Successfully dropped phone_1 unique index on contacts collection.");
+    } catch (err) {
+      // Index doesn't exist, ignore
+    }
+
     mongoose.connection.on("error", (err) => {
       console.error("MongoDB connection error:", err);
     });

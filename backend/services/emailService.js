@@ -20,10 +20,12 @@ export const sendEmergencyEmail = async ({
   address,
   evidenceUrl,
   alertTime,
+  alertId,
 }) => {
   const transporter = createTransporter();
 
   const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+  const publicTrackingLink = alertId ? `http://localhost:5173/sos-active/${alertId}` : null;
 
   const html = `
     <div style="font-family: Arial, sans-serif; background:#f4f6fb; padding:24px;">
@@ -51,9 +53,15 @@ export const sendEmergencyEmail = async ({
 
           <div style="text-align:center; margin:28px 0;">
             <a href="${mapsLink}" target="_blank"
-              style="display:inline-block; background:#e11d48; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold;">
-              📍 Open Live Location
+              style="display:inline-block; background:#e11d48; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold; margin-right:10px;">
+              📍 Open Google Maps
             </a>
+            ${publicTrackingLink ? `
+            <a href="${publicTrackingLink}" target="_blank"
+              style="display:inline-block; background:#7c3aed; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold;">
+              🚨 Open Emergency Alarm Tracker
+            </a>
+            ` : ''}
           </div>
 
           ${
@@ -98,8 +106,10 @@ export const sendEvidenceFollowUpEmail = async ({
   userName,
   evidenceUrl,
   alertTime,
+  alertId,
 }) => {
   const transporter = createTransporter();
+  const publicTrackingLink = alertId ? `http://localhost:5173/sos-active/${alertId}` : null;
 
   const html = `
     <div style="font-family: Arial, sans-serif; background:#f4f6fb; padding:24px;">
@@ -125,9 +135,15 @@ export const sendEvidenceFollowUpEmail = async ({
 
           <div style="text-align:center; margin:28px 0;">
             <a href="${evidenceUrl}" target="_blank"
-              style="display:inline-block; background:#7c3aed; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold;">
-              🎥 View Current Evidence Recording
+              style="display:inline-block; background:#7c3aed; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold; margin-right:10px;">
+              🎥 View Evidence Recording
             </a>
+            ${publicTrackingLink ? `
+            <a href="${publicTrackingLink}" target="_blank"
+              style="display:inline-block; background:#b91c1c; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold;">
+              🚨 Open Emergency Alarm Tracker
+            </a>
+            ` : ''}
           </div>
 
           <p style="font-size:14px; color:#64748b; line-height:1.6;">

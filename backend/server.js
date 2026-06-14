@@ -9,7 +9,10 @@ import sosRoutes from "./routes/sosRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import pushRoutes from "./routes/pushRoutes.js";
 import connectDB from "./config/db.js";
+import webpush from "web-push";
+import { startNotificationRetryLoop } from "./services/notificationRetryService.js";
 
 dotenv.config();
 
@@ -31,11 +34,24 @@ app.use(express.json());
 
 app.set("io", io);
 
+// Configure web-push VAPID details
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    `mailto:${process.env.EMAIL_USER || "admin@voiceofher.com"}`,
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+  console.log("VAPID details configured successfully.");
+} else {
+  console.warn("VAPID keys not configured. Web Push notifications will be disabled.");
+}
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/sos", sosRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/push", pushRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -54,4 +70,5 @@ const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  startNotificationRetryLoop(io);
 });

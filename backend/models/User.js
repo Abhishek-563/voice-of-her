@@ -45,6 +45,11 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
+    fcmToken: {
+      type: String,
+      default: "",
+    },
+
     emergencyContacts: [emergencyContactSchema],
   },
   {
