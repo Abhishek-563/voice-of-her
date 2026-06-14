@@ -62,7 +62,7 @@ export default function PublicSOS() {
     try {
       setLoading(true);
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/sos/${id}/public`
+        `${import.meta.env.VITE_API_URL}/api/sos/${id}/public`
       );
       setAlertData(res.data);
       setError("");
