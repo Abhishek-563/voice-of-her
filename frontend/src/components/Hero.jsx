@@ -41,7 +41,7 @@ const Hero = ({ onSOSClick }) => {
           <div>
             <img
               src="/hero-woman.png"
-              alt="Voice of Her"
+              alt="Suraksha"
               className="w-full"
             />
           </div>

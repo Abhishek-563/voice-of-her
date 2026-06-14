@@ -67,7 +67,7 @@ const AppSidebar = () => {
 
           <div>
             <h1 className="text-2xl font-black">
-              Voice of Her
+              Suraksha
             </h1>
 
             <p className="text-gray-500 text-sm mt-1">

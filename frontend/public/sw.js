@@ -1,4 +1,4 @@
-// Service Worker for Voice of Her push notifications
+// Service Worker for Suraksha push notifications
 
 self.addEventListener("push", (event) => {
   let data = {};

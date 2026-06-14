@@ -101,7 +101,7 @@ export default function Hero() {
 
             <img
               src="/hero-image.png"
-              alt="Voice Of Her"
+              alt="Suraksha"
               className="w-full"
             />
 

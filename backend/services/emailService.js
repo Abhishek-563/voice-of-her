@@ -36,7 +36,7 @@ export const sendEmergencyEmail = async ({
 
         <div style="background:linear-gradient(135deg,#e11d48,#9333ea); padding:24px; color:white;">
           <h1 style="margin:0; font-size:26px;">🚨 Emergency SOS Alert</h1>
-          <p style="margin:8px 0 0;">Voice of Her Safety Notification</p>
+          <p style="margin:8px 0 0;">Suraksha Safety Notification</p>
         </div>
 
         <div style="padding:26px;">
@@ -79,7 +79,7 @@ export const sendEmergencyEmail = async ({
           }
 
           <p style="font-size:14px; color:#64748b; line-height:1.6;">
-            This alert was sent automatically by the Voice of Her safety system.
+            This alert was sent automatically by the Suraksha safety system.
             If this is a real emergency, contact the user immediately or reach nearby emergency services.
           </p>
         </div>
@@ -95,7 +95,7 @@ export const sendEmergencyEmail = async ({
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
-          name: "Voice of Her SOS",
+          name: "Suraksha SOS",
           email: senderEmail,
         },
         to: [
@@ -121,7 +121,7 @@ export const sendEmergencyEmail = async ({
     console.log(`Sending SMTP email to ${to}...`);
     const transporter = createTransporter();
     const mailOptions = {
-      from: `"Voice of Her SOS" <${process.env.EMAIL_USER}>`,
+      from: `"Suraksha SOS" <${process.env.EMAIL_USER}>`,
       to,
       subject: "🚨 Emergency SOS Alert - Immediate Attention Needed",
       html,
@@ -147,7 +147,7 @@ export const sendEvidenceFollowUpEmail = async ({
         
         <div style="background:linear-gradient(135deg,#7c3aed,#db2777); padding:24px; color:white;">
           <h1 style="margin:0; font-size:26px;">🎥 SOS Evidence Update</h1>
-          <p style="margin:8px 0 0;">Voice of Her Evidence Notification</p>
+          <p style="margin:8px 0 0;">Suraksha Evidence Notification</p>
         </div>
 
         <div style="padding:26px;">
@@ -186,7 +186,7 @@ export const sendEvidenceFollowUpEmail = async ({
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
-          name: "Voice of Her Evidence",
+          name: "Suraksha Evidence",
           email: senderEmail,
         },
         to: [
@@ -195,7 +195,7 @@ export const sendEvidenceFollowUpEmail = async ({
             name: contactName,
           },
         ],
-        subject: "🎥 SOS Evidence Recording Attached - Voice of Her",
+        subject: "🎥 SOS Evidence Recording Attached - Suraksha",
         htmlContent: html,
       },
       {
@@ -212,9 +212,9 @@ export const sendEvidenceFollowUpEmail = async ({
     console.log(`Sending SMTP evidence follow-up email to ${to}...`);
     const transporter = createTransporter();
     const mailOptions = {
-      from: `"Voice of Her Evidence" <${process.env.EMAIL_USER}>`,
+      from: `"Suraksha Evidence" <${process.env.EMAIL_USER}>`,
       to,
-      subject: "🎥 SOS Evidence Recording Attached - Voice of Her",
+      subject: "🎥 SOS Evidence Recording Attached - Suraksha",
       html,
     };
     return transporter.sendMail(mailOptions);

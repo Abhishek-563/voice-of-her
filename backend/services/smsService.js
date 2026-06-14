@@ -37,7 +37,7 @@ export const sendEmergencySMS = async ({
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
   const trackerLink = alertId ? `${frontendUrl}/sos-active/${alertId}` : '';
 
-  const messageBody = `🚨 SOS ALERT from ${userName || "Voice of Her User"}
+  const messageBody = `🚨 SOS ALERT from ${userName || "Suraksha User"}
 
 Hello ${contactName || "Contact"},
 Emergency help is needed.

@@ -23,7 +23,7 @@ export default function Dashboard() {
           <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-1.5 rounded-lg">
             <ShieldCheck size={20} className="text-white" />
           </div>
-          <span className="font-bold text-lg tracking-wide">Voice of Her</span>
+          <span className="font-bold text-lg tracking-wide">Suraksha</span>
         </div>
 
         <nav className="flex-1 space-y-2">

@@ -738,7 +738,7 @@ export default function Home() {
                 <Shield size={18} color="white" />
               </div>
               <div>
-                <p style={{ fontWeight: 800, fontSize: "0.95rem", lineHeight: 1 }}>Voice of Her</p>
+                <p style={{ fontWeight: 800, fontSize: "0.95rem", lineHeight: 1 }}>Suraksha</p>
                 <p style={{ color: "#64748b", fontSize: "0.65rem", marginTop: "2px" }}>Safety Platform</p>
               </div>
             </div>

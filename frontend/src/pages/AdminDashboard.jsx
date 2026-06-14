@@ -312,7 +312,7 @@ const AdminDashboard = () => {
       if (!("Notification" in window)) return;
       if (Notification.permission !== "granted") return;
 
-      const notification = new Notification("🚨 New SOS Alert - Voice of Her", {
+      const notification = new Notification("🚨 New SOS Alert - Suraksha", {
         body: `Emergency alert from ${newAlert.name || "Unknown user"}. Click to view dashboard.`,
         icon: "/favicon.svg",
         badge: "/favicon.svg",
@@ -1204,7 +1204,7 @@ const AdminDashboard = () => {
               <ShieldAlert size={20} color="white" />
             </div>
             <div>
-              <p className="admin-logo-title">Voice of Her</p>
+              <p className="admin-logo-title">Suraksha</p>
               <p className="admin-logo-subtitle">ADMIN CONTROL</p>
             </div>
           </div>
