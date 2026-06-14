@@ -400,7 +400,13 @@ const AdminDashboard = () => {
     }, 0);
 
     socket.on("newSOSAlert", (newAlert) => {
-      setAlerts((prev) => [newAlert, ...prev]);
+      setAlerts((prev) => {
+        const exists = prev.some((alert) => String(alert._id) === String(newAlert._id));
+        if (exists) {
+          return prev.map((alert) => String(alert._id) === String(newAlert._id) ? newAlert : alert);
+        }
+        return [newAlert, ...prev];
+      });
 
       if (
         !currentUser?._id ||

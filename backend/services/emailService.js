@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import axios from "axios";
 
 const createTransporter = () => {
   return nodemailer.createTransport({
@@ -7,6 +8,9 @@ const createTransporter = () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
   });
 };
 
@@ -22,10 +26,9 @@ export const sendEmergencyEmail = async ({
   alertTime,
   alertId,
 }) => {
-  const transporter = createTransporter();
-
   const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-  const publicTrackingLink = alertId ? `http://localhost:5173/sos-active/${alertId}` : null;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const publicTrackingLink = alertId ? `${frontendUrl}/sos-active/${alertId}` : null;
 
   const html = `
     <div style="font-family: Arial, sans-serif; background:#f4f6fb; padding:24px;">
@@ -53,15 +56,9 @@ export const sendEmergencyEmail = async ({
 
           <div style="text-align:center; margin:28px 0;">
             <a href="${mapsLink}" target="_blank"
-              style="display:inline-block; background:#e11d48; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold; margin-right:10px;">
+              style="display:inline-block; background:#e11d48; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold;">
               📍 Open Google Maps
             </a>
-            ${publicTrackingLink ? `
-            <a href="${publicTrackingLink}" target="_blank"
-              style="display:inline-block; background:#7c3aed; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold;">
-              🚨 Open Emergency Alarm Tracker
-            </a>
-            ` : ''}
           </div>
 
           ${
@@ -90,14 +87,47 @@ export const sendEmergencyEmail = async ({
     </div>
   `;
 
-  const mailOptions = {
-    from: `"Voice of Her SOS" <${process.env.EMAIL_USER}>`,
-    to,
-    subject: "🚨 Emergency SOS Alert - Immediate Attention Needed",
-    html,
-  };
-
-  return transporter.sendMail(mailOptions);
+  // Check if Brevo is configured, otherwise fallback to SMTP
+  if (process.env.BREVO_API_KEY) {
+    console.log(`Sending Brevo API email to ${to}...`);
+    const senderEmail = process.env.EMAIL_USER || "admin@voiceofher.com";
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: "Voice of Her SOS",
+          email: senderEmail,
+        },
+        to: [
+          {
+            email: to,
+            name: contactName,
+          },
+        ],
+        subject: "🚨 Emergency SOS Alert - Immediate Attention Needed",
+        htmlContent: html,
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+      }
+    );
+    console.log("Brevo API email sent successfully:", response.data);
+    return response.data;
+  } else {
+    console.log(`Sending SMTP email to ${to}...`);
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: `"Voice of Her SOS" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: "🚨 Emergency SOS Alert - Immediate Attention Needed",
+      html,
+    };
+    return transporter.sendMail(mailOptions);
+  }
 };
 
 export const sendEvidenceFollowUpEmail = async ({
@@ -108,8 +138,8 @@ export const sendEvidenceFollowUpEmail = async ({
   alertTime,
   alertId,
 }) => {
-  const transporter = createTransporter();
-  const publicTrackingLink = alertId ? `http://localhost:5173/sos-active/${alertId}` : null;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const publicTrackingLink = alertId ? `${frontendUrl}/sos-active/${alertId}` : null;
 
   const html = `
     <div style="font-family: Arial, sans-serif; background:#f4f6fb; padding:24px;">
@@ -135,15 +165,9 @@ export const sendEvidenceFollowUpEmail = async ({
 
           <div style="text-align:center; margin:28px 0;">
             <a href="${evidenceUrl}" target="_blank"
-              style="display:inline-block; background:#7c3aed; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold; margin-right:10px;">
+              style="display:inline-block; background:#7c3aed; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold;">
               🎥 View Evidence Recording
             </a>
-            ${publicTrackingLink ? `
-            <a href="${publicTrackingLink}" target="_blank"
-              style="display:inline-block; background:#b91c1c; color:white; padding:14px 22px; border-radius:12px; text-decoration:none; font-weight:bold;">
-              🚨 Open Emergency Alarm Tracker
-            </a>
-            ` : ''}
           </div>
 
           <p style="font-size:14px; color:#64748b; line-height:1.6;">
@@ -154,12 +178,45 @@ export const sendEvidenceFollowUpEmail = async ({
     </div>
   `;
 
-  const mailOptions = {
-    from: `"Voice of Her Evidence" <${process.env.EMAIL_USER}>`,
-    to,
-    subject: "🎥 SOS Evidence Recording Attached - Voice of Her",
-    html,
-  };
-
-  return transporter.sendMail(mailOptions);
+  // Check if Brevo is configured, otherwise fallback to SMTP
+  if (process.env.BREVO_API_KEY) {
+    console.log(`Sending Brevo API evidence follow-up email to ${to}...`);
+    const senderEmail = process.env.EMAIL_USER || "admin@voiceofher.com";
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: "Voice of Her Evidence",
+          email: senderEmail,
+        },
+        to: [
+          {
+            email: to,
+            name: contactName,
+          },
+        ],
+        subject: "🎥 SOS Evidence Recording Attached - Voice of Her",
+        htmlContent: html,
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+      }
+    );
+    console.log("Brevo API evidence email sent successfully:", response.data);
+    return response.data;
+  } else {
+    console.log(`Sending SMTP evidence follow-up email to ${to}...`);
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: `"Voice of Her Evidence" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: "🎥 SOS Evidence Recording Attached - Voice of Her",
+      html,
+    };
+    return transporter.sendMail(mailOptions);
+  }
 };

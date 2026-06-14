@@ -14,7 +14,10 @@ const VoiceDetection = ({ setShowSOS, onSOSDetected }) => {
   const triggerSOS = useCallback(async (by) => {
     try {
       navigator.geolocation.getCurrentPosition(async (pos) => {
-        await sosAPI.send({ lat: pos.coords.latitude, lng: pos.coords.longitude }, by);
+        await sosAPI.send(
+          { latitude: pos.coords.latitude, longitude: pos.coords.longitude },
+          by
+        );
       });
     } catch (e) { console.error(e); }
   }, []);

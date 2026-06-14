@@ -12,7 +12,10 @@ import { sendEmergencySMS } from "../services/smsService.js";
 
 export const sendSOS = async (req, res) => {
   try {
-    const { latitude, longitude, address, evidenceUrl, name, email } = req.body;
+    let { latitude, longitude, address, evidenceUrl, name, email, lat, lng } = req.body;
+
+    if (latitude === undefined && lat !== undefined) latitude = lat;
+    if (longitude === undefined && lng !== undefined) longitude = lng;
 
     if (!latitude || !longitude) {
       return res.status(400).json({
@@ -66,8 +69,8 @@ export const sendSOS = async (req, res) => {
       let smsSentCount = 0;
       let smsFailedCount = 0;
 
-      // 1. Send Email & SMS to contacts
-      for (const contact of contacts) {
+      // 1. Send Email & SMS to contacts in parallel
+      const contactPromises = contacts.map(async (contact) => {
         if (contact.email) {
           try {
             await sendEmergencyEmail({
@@ -119,7 +122,9 @@ export const sendSOS = async (req, res) => {
             );
           }
         }
-      }
+      });
+
+      await Promise.allSettled(contactPromises);
 
       // 2. Send Web Push Notifications to registered contact users and admins
       try {

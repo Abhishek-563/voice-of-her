@@ -1,5 +1,4 @@
 import twilio from "twilio";
-import axios from "axios";
 
 let client = null;
 
@@ -35,7 +34,8 @@ export const sendEmergencySMS = async ({
   let cleanPhone = to.replace(/[\s\-\(\)]/g, "");
 
   const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-  const trackerLink = alertId ? `http://localhost:5173/sos-active/${alertId}` : '';
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const trackerLink = alertId ? `${frontendUrl}/sos-active/${alertId}` : '';
 
   const messageBody = `🚨 SOS ALERT from ${userName || "Voice of Her User"}
 
@@ -49,7 +49,7 @@ ${evidenceUrl ? `Evidence: ${evidenceUrl}` : ""}
 
 Please respond immediately.`;
 
-  // 1. Try Twilio first if configured
+  // 1. Try Twilio if configured
   const smsClient = getTwilioClient();
   const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 
@@ -73,35 +73,10 @@ Please respond immediately.`;
       console.log("Twilio SMS sent successfully. SID:", message.sid);
       return message;
     } catch (twilioError) {
-      console.error("Twilio SMS failed, trying Fast2SMS fallback:", twilioError.message);
+      console.error("Twilio SMS failed:", twilioError.message);
+      throw new Error(`Twilio SMS failed: ${twilioError.message}`);
     }
   }
 
-  // 2. Try Fast2SMS fallback/primary
-  const fast2SmsKey = process.env.FAST2SMS_API_KEY;
-  if (fast2SmsKey) {
-    try {
-      // Fast2SMS expects 10-digit number for Indian numbers or clean digits
-      let fast2SmsTo = cleanPhone.replace("+", "");
-      if (fast2SmsTo.startsWith("91") && fast2SmsTo.length > 10) {
-        fast2SmsTo = fast2SmsTo.substring(fast2SmsTo.length - 10);
-      }
-      console.log(`Sending Fast2SMS to ${fast2SmsTo}...`);
-      const response = await axios.get("https://www.fast2sms.com/dev/bulkV2", {
-        params: {
-          authorization: fast2SmsKey,
-          route: "q",
-          message: messageBody,
-          numbers: fast2SmsTo,
-        },
-      });
-      console.log("Fast2SMS sent successfully. Response:", response.data);
-      return response.data;
-    } catch (fast2SmsError) {
-      console.error("Fast2SMS failed:", fast2SmsError.message);
-      throw new Error(`SMS send failed (Twilio & Fast2SMS failed): ${fast2SmsError.message}`);
-    }
-  }
-
-  throw new Error("No SMS service (Twilio/Fast2SMS) is configured.");
+  throw new Error("Twilio SMS service is not configured.");
 };
