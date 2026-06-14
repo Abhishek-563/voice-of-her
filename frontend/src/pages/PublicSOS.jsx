@@ -61,7 +61,9 @@ export default function PublicSOS() {
   const fetchAlert = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`http://localhost:5000/api/sos/${id}/public`);
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/sos/${id}/public`
+      );
       setAlertData(res.data);
       setError("");
     } catch (err) {
